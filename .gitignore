@@ -1,3 +1,17 @@
+# log files
+story/_*
+story/aigen/*/batches.jsonl
+story/aigen/*/manifest.jsonl
+story/aigen/*/state.json
+story/aigen/*/_batches
+results/lex/_*
+results/sem/_*
+results/syn/_*
+preprocess/_*
+
+# Mac OS files
+*.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
