@@ -21,7 +21,7 @@ import numpy as np
 import scipy.stats as stats
 from nltk.tokenize import sent_tokenize
 
-from plot import plot_by_section, plot_by_sample, SECTION_SEP
+from plot import plot_by_section, plot_by_sample, duplicate_cleaned, SECTION_SEP
 from store import ResultsStore, file_sha1
 
 import re
@@ -32,15 +32,6 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Helpers shared by the metrics
 # ---------------------------------------------------------------------------
-
-def duplicate_cleaned(src_path: str) -> Path:
-    src = Path(src_path)
-    # Remove leading underscores OR '_YYYYMMDD-HHMMSS' anywhere in the stem
-    cleaned_stem = re.sub(r'^_+|_\d{8}-\d{6}', '', src.stem)
-    dst = str(src.with_name(f"{cleaned_stem}{src.suffix}"))
-
-    shutil.copy2(src, dst)
-    return dst
 
 def mean_confidence_interval(data, confidence=0.95):
     """Mean and the half-width of its confidence interval."""

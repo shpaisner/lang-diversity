@@ -35,7 +35,6 @@ import pandas as pd
 import seaborn as sns
 import scipy.stats as stats
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 
 import re
 import shutil
@@ -43,7 +42,8 @@ from pathlib import Path
 
 def duplicate_cleaned(src_path: str) -> Path:
     src = Path(src_path)
-    cleaned_stem = re.sub(r'^_+|_\d{8}-\d{6}$', '', src.stem)
+    # Remove leading underscores OR '_YYYYMMDD-HHMMSS' anywhere in the stem
+    cleaned_stem = re.sub(r'^_+|_\d{8}-\d{6}', '', src.stem)
     dst = str(src.with_name(f"{cleaned_stem}{src.suffix}"))
 
     shutil.copy2(src, dst)
