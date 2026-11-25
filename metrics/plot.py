@@ -37,6 +37,17 @@ import scipy.stats as stats
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
+import re
+import shutil
+from pathlib import Path
+
+def duplicate_cleaned(src_path: str) -> Path:
+    src = Path(src_path)
+    cleaned_stem = re.sub(r'^_+|_\d{8}-\d{6}$', '', src.stem)
+    dst = str(src.with_name(f"{cleaned_stem}{src.suffix}"))
+
+    shutil.copy2(src, dst)
+    return dst
 
 # ---------------------------------------------------------------------------
 # Theme
@@ -523,6 +534,7 @@ def plot_by_sample(
     plt.tight_layout()
     if output:
         plt.savefig(output, dpi=150, bbox_inches="tight")
+        duplicate_cleaned(output)
 
     if show:
         plt.show()
@@ -588,6 +600,7 @@ def plot_by_file(
         # fig.subplots_adjust(wspace=0.05)
         if output:
             fig.savefig(output, dpi=150, bbox_inches="tight")
+            duplicate_cleaned(output)
         
         if show:
             plt.show()
@@ -792,6 +805,7 @@ def plot_by_section(
     fig.tight_layout(rect=(0, 0, 1 - leg_w / max(7, width), 1))
     if output:
         fig.savefig(output, dpi=150, bbox_inches="tight")
+        duplicate_cleaned(output)
     if show:
         plt.show()
     return pts.drop(columns=["key"])

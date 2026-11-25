@@ -24,10 +24,23 @@ from nltk.tokenize import sent_tokenize
 from plot import plot_by_section, plot_by_sample, SECTION_SEP
 from store import ResultsStore, file_sha1
 
+import re
+import shutil
+from pathlib import Path
+
 
 # ---------------------------------------------------------------------------
 # Helpers shared by the metrics
 # ---------------------------------------------------------------------------
+
+def duplicate_cleaned(src_path: str) -> Path:
+    src = Path(src_path)
+    # Remove leading underscores OR '_YYYYMMDD-HHMMSS' anywhere in the stem
+    cleaned_stem = re.sub(r'^_+|_\d{8}-\d{6}', '', src.stem)
+    dst = str(src.with_name(f"{cleaned_stem}{src.suffix}"))
+
+    shutil.copy2(src, dst)
+    return dst
 
 def mean_confidence_interval(data, confidence=0.95):
     """Mean and the half-width of its confidence interval."""
@@ -203,6 +216,7 @@ class MetricRunner:
         # Snapshot of exactly what was plotted, readable by plot.py's replot
         snap = df.rename(columns={"filename": "file", "sample_size": "n_samples", "metric": "score"})
         snap[["section", "file", "n_samples", "n_run", "score", "ci"]].to_csv(output_file, index=False)
+        duplicate_cleaned(output_file)
 
         png = output_file.replace(".txt", ".png")
         if by_file:
@@ -216,7 +230,9 @@ class MetricRunner:
                 show_files = self.show_files,
                 show       = show_plot,
             )
-            summary.to_csv(output_file.replace(".txt", "_summary.csv"), index=False)
+            summary_file = output_file.replace(".txt", "_summary.csv")
+            summary.to_csv(summary_file, index=False)
+            duplicate_cleaned(summary_file)
         else:
             df["section"] = df["section"].map(lambda s: s.split(SECTION_SEP)[-1])   # "human | scifi" -> "scifi"
             plot_by_sample(
