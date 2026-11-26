@@ -1,0 +1,13 @@
+metric,series,algo,correlation,p-value
+lex,human-sonnet,spearman,0.333,0.347
+lex,human-gemini,spearman,0.297,0.405
+lex,human-sonnet,pearson,0.785,0.007
+lex,human-gemini,pearson,0.754,0.012
+sem,human-sonnet,spearman,0.503,0.138
+sem,human-gemini,spearman,0.406,0.244
+sem,human-sonnet,pearson,0.546,0.102
+sem,human-gemini,pearson,0.591,0.072
+syn,human-sonnet,spearman,0.6,0.067
+syn,human-gemini,spearman,0.721,0.019
+syn,human-sonnet,pearson,0.577,0.081
+syn,human-gemini,pearson,0.827,0.003

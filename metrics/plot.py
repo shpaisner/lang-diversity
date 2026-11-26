@@ -405,8 +405,8 @@ def summarise_by_file(df: pd.DataFrame) -> pd.DataFrame:
 # Fixed colours for named series, so a model keeps the same colour in every plot and every
 # metric. Series not listed here take the next free colour from the palette.
 SERIES_COLORS = {
-    "sonnet5-5":         sns.color_palette("muted")[3],   # red
-    "gemini-4-hydrogen": sns.color_palette("muted")[2],   # green
+    "sonnet5-5":         sns.color_palette("muted")[2],   # green
+    "gemini-4-hydrogen": sns.color_palette("muted")[3],   # red
 }
 
 def summarise_points(df: pd.DataFrame, individual_groups=("human",),
