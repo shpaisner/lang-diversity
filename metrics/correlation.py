@@ -11,7 +11,7 @@ files = {
     'syn': '../results/syn/syn_summary.csv'
 }
 
-with open('../results/correlation.csv', '+w') as fout:
+with open('../results/correlation.csv', 'w') as fout:
     csvwriter = csv.writer(fout)
     csvwriter.writerow(['metric','series','algo','correlation','p-value'])
 
@@ -35,16 +35,16 @@ with open('../results/correlation.csv', '+w') as fout:
 
             spearman_sonnet = spearmanr(human, sonnet)
             spearman_gemini = spearmanr(human, gemini)
-            csvwriter.writerow([key, 'human-sonnet', 'spearman', 
+            csvwriter.writerow([key, 'human-sonnet', 'spearman',
                                 round(spearman_sonnet.statistic, 3), 
                                 round(spearman_sonnet.pvalue, 3)])
-            csvwriter.writerow([key, 'human-sonnet', 'spearman', 
+            csvwriter.writerow([key, 'human-gemini', 'spearman',
                                 round(spearman_gemini.statistic, 3), 
                                 round(spearman_gemini.pvalue, 3)])
 
             pearson_sonnet = pearsonr(human, sonnet)
             pearson_gemini = pearsonr(human, gemini)
-            csvwriter.writerow([key, 'human-gemini', 'pearson', 
+            csvwriter.writerow([key, 'human-sonnet', 'pearson',
                                 round(pearson_sonnet.statistic, 3), 
                                 round(pearson_sonnet.pvalue, 3)])
             csvwriter.writerow([key, 'human-gemini', 'pearson', 
