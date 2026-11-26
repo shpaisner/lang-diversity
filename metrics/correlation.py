@@ -15,6 +15,7 @@ with open('../results/correlation.csv', 'w') as fout:
     csvwriter = csv.writer(fout)
     csvwriter.writerow(['metric','series','algo','correlation','p-value'])
 
+    # TODO sort data points by author, cannot rely on DictReader ordering
     for key, file in files.items():
         with open(file) as csvfile:
             csvreader = csv.DictReader(csvfile)

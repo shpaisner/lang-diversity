@@ -402,6 +402,12 @@ def summarise_by_file(df: pd.DataFrame) -> pd.DataFrame:
                  else ["filename"]
     return _summarise(df, group_cols)
 
+# Fixed colours for named series, so a model keeps the same colour in every plot and every
+# metric. Series not listed here take the next free colour from the palette.
+SERIES_COLORS = {
+    "sonnet5-5":         sns.color_palette("muted")[3],   # red
+    "gemini-4-hydrogen": sns.color_palette("muted")[2],   # green
+}
 
 def summarise_points(df: pd.DataFrame, individual_groups=("human",),
                      interval: str = "ci", level: float = 0.95) -> pd.DataFrame:
@@ -692,6 +698,7 @@ def plot_by_section(
     label_rotation:    float = 45,
     height:            float = 5,
     show:              bool  = True,
+    series_colors:     dict  = None,
 ) -> pd.DataFrame:
     """
     Clusters by style name, one panel per human style directory.
@@ -741,8 +748,12 @@ def plot_by_section(
     ind_series = list(dict.fromkeys(p[2] for p in panels if p[2]))
     ai_series  = [s for s in sorted(oth["series"].unique()) if s not in ind_series]
     all_series = ind_series + ai_series
-    palette    = sns.color_palette("muted", n_colors=max(len(all_series), 1))
-    colour_of  = {s: palette[i] for i, s in enumerate(all_series)}
+    # palette    = sns.color_palette("muted", n_colors=max(len(all_series), 1))
+    # colour_of  = {s: palette[i] for i, s in enumerate(all_series)}
+    fixed      = {s: c for s, c in {**SERIES_COLORS, **(series_colors or {})}.items() if s in all_series}
+    palette    = sns.color_palette("muted", n_colors=len(all_series) + len(fixed))
+    free       = [c for c in palette if c not in fixed.values()]      # colours not claimed by a fixed series
+    colour_of  = {s: fixed[s] if s in fixed else free.pop(0) for s in all_series}
 
     max_slots = 1 + len(ai_series)
     leg_w     = 1.7

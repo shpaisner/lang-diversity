@@ -24,11 +24,6 @@ from nltk.tokenize import sent_tokenize
 from plot import plot_by_section, plot_by_sample, duplicate_cleaned, SECTION_SEP
 from store import ResultsStore, file_sha1
 
-import re
-import shutil
-from pathlib import Path
-
-
 # ---------------------------------------------------------------------------
 # Helpers shared by the metrics
 # ---------------------------------------------------------------------------
@@ -279,6 +274,8 @@ class MetricRunner:
         ap.add_argument("--samples", type=int, nargs="+", help="override the sample size(s)")
         ap.add_argument("--runs", type=int, help=f"random runs per file and size (default {self.runs})")
         ap.add_argument("--models", nargs="+", help="only these model directories (file mode)")
+        ap.add_argument("--human-only", action="store_true",
+                        help="only the human corpora: nothing else is scored or plotted (file mode)")
         ap.add_argument("--plot-only", action="store_true", help="plot what is stored; compute nothing")
         ap.add_argument("--show", action="store_true", help="open the plot window")
         ap.add_argument("--import", dest="import_files", nargs="+", metavar="FILE",
@@ -293,7 +290,8 @@ class MetricRunner:
         by_file = args.mode == "file"
         if by_file:
             n_samples = args.samples or self.samples_by_file
-            sections = self.discover_sections(models=args.models)
+            # sections = self.discover_sections(models=args.models)
+            sections = self.discover_sections(models=args.models, aigen=not args.human_only)
         else:
             n_samples = args.samples or self.samples_sweep
             sections = self.discover_sections(aigen=False)   # keeps "human | <style>" labels so the store is shared
@@ -305,5 +303,6 @@ class MetricRunner:
             files_by_section = self.update_store(n_samples, n_runs, sections)
 
         os.makedirs(self.results_dir, exist_ok=True)
-        output_file = os.path.join(self.results_dir, f"_{self.name}_{time.strftime('%Y%m%d-%H%M%S')}.txt")
+        suffix = "_human" if args.human_only and by_file else ""
+        output_file = os.path.join(self.results_dir, f"_{self.name}_{time.strftime('%Y%m%d-%H%M%S')}{suffix}.txt")
         self.plot(files_by_section, n_samples, output_file, by_file, args.show)
