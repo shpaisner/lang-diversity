@@ -66,26 +66,30 @@ def set_theme():
         rc      = {
             "axes.facecolor":     "white",
             "figure.facecolor":   "white",
-            "axes.edgecolor":     "#CCCCCC",
-            "axes.linewidth":     0.8,
+            "axes.edgecolor":     "#222222",
+            "axes.linewidth":     1.3,
             "axes.spines.top":    False,
-            "axes.spines.bottom": False,
-            "axes.spines.left":   False,
+            "axes.spines.bottom": True,
+            "axes.spines.left":   True,
             "axes.spines.right":  False,
-            "grid.color":         "#EEEEEE",
-            "grid.linewidth":     0.8,
-            "axes.titlesize":     13,
+            "grid.color":         "#DDDDDD",
+            "grid.linewidth":     1.0,
+            "axes.titlesize":     17,
             "axes.titleweight":   "bold",
-            "axes.labelsize":     11,
-            "axes.labelcolor":    "#333333",
-            "xtick.labelsize":    9,
-            "ytick.labelsize":    9,
-            "xtick.color":        "#555555",
-            "ytick.color":        "#555555",
-            "xtick.major.size":   0,
-            "ytick.major.size":   3,
-            "text.color":         "#333333",
-            "figure.titlesize":   14,
+            "axes.labelsize":     18,
+            "axes.labelweight":   "bold",
+            "axes.labelcolor":    "#000000",
+            "xtick.labelsize":    12,
+            "ytick.labelsize":    12,
+            "xtick.color":        "#111111",
+            "ytick.color":        "#111111",
+            "xtick.major.size":   6,
+            "ytick.major.size":   6,
+            "xtick.major.width":  1.3,
+            "ytick.major.width":  1.3,
+            "legend.fontsize":    12,
+            "text.color":         "#111111",
+            "figure.titlesize":   19,
             "figure.titleweight": "bold",
         }
     )
@@ -409,8 +413,80 @@ SERIES_COLORS = {
     "gemini-4-hydrogen": sns.color_palette("muted")[3],   # red
 }
 
+# AI prompts with no human author file -> the human style directory whose group average is
+# drawn beside them (open circles) in the "generalized" panel. {} switches it off.
+GENRE_GROUPS = {"scifi": "scifi", "non-scifi": "fiction"}
+
+# Panel display names (data keys are untouched) and left-to-right panel order.
+PANEL_TITLES = {"fiction": "non-scifi"}
+PANEL_ORDER  = ["generalized", "non-scifi", "scifi"]
+
+
+def _group_err(vals, interval: str = "ci", level: float = 0.95) -> float:
+    """Error-bar half-width across values: t-based CI of the mean, or the SD."""
+    vals = pd.Series(list(vals), dtype=float).dropna()
+    n = len(vals)
+    if n < 2:
+        return 0.0
+    sd = float(vals.std(ddof=1))
+    return sd if interval == "sd" else float(stats.t.ppf(0.5 + level / 2, df=n - 1) * sd / n ** 0.5)
+
+
+def summarise_group_averages(df: pd.DataFrame, genre_groups: dict = None,
+                             individual_groups=("human",),
+                             interval: str = "ci", level: float = 0.95) -> pd.DataFrame:
+    """
+    Group averages for AI styles that have no human file (e.g. "scifi", "non-scifi").
+
+    genre_groups maps such an AI style to a human style directory
+    (default GENRE_GROUPS: "non-scifi" -> "fiction", "scifi" -> "scifi"). For each entry:
+      * one human row per individual group: the mean over ALL raw rows of that directory's files
+      * one row per model: the mean over ALL raw rows of that model's style directories
+        whose name matches a human file in that directory (doyle, hemingway, ... for "fiction")
+
+    The averages use the raw rows (every run of every file pooled), not the per-file summaries;
+    err is the CI or SD across those raw rows, and n_files counts the files that went in.
+
+    Returns columns: group, style, label, mean_metric, err, n_files, kind ("group"),
+    anchor (the AI style the average is drawn beside).
+    """
+    cols = ["group", "style", "label", "mean_metric", "err", "n_files", "kind", "anchor"]
+    gmap = {k.lower(): v.lower() for k, v in (GENRE_GROUPS if genre_groups is None else genre_groups).items()}
+    individual_groups = set(individual_groups or ())
+    d = df[df["section"].notna()].copy()
+    split = d["section"].map(_split_section)
+    d["_g"], d["_style"] = split.map(lambda t: t[0]), split.map(lambda t: t[1].strip().lower())
+    d["_file"] = d["filename"].astype(str).str.replace(r"\.txt$", "", regex=True).str.strip().str.lower()
+
+    is_ind   = d["_g"].isin(individual_groups)
+    human, other = d[is_ind], d[~is_ind]
+    human_labels = set(human["_file"])                 # AI styles matching one of these sit in a human panel
+    rows = []
+    for ai_key, genre in gmap.items():
+        if ai_key in human_labels or ai_key not in set(other["_style"]):
+            continue
+        hum = human[human["_style"] == genre]
+        if hum.empty:
+            print(f"NOTE: no human '{genre}' directory, so no group average beside '{ai_key}'")
+            continue
+        label    = f"avg {PANEL_TITLES.get(genre, genre)}"
+        hum_keys = set(hum["_file"])
+        for g, raw in hum.groupby("_g", dropna=False):                       # human average
+            rows.append(dict(group=None if pd.isna(g) else g, style=genre, label=label,
+                             mean_metric=raw["metric"].mean(), err=_group_err(raw["metric"], interval, level),
+                             n_files=raw.groupby(["section", "filename"]).ngroups, kind="group", anchor=ai_key))
+        for g, mg in other.groupby("_g", dropna=False):                      # each model's average
+            raw = mg[mg["_style"].isin(hum_keys)]
+            if len(raw):
+                rows.append(dict(group=None if pd.isna(g) else g, style=genre, label=label,
+                                 mean_metric=raw["metric"].mean(), err=_group_err(raw["metric"], interval, level),
+                                 n_files=raw.groupby(["section", "filename"]).ngroups, kind="group", anchor=ai_key))
+    return pd.DataFrame(rows, columns=cols)
+
+
 def summarise_points(df: pd.DataFrame, individual_groups=("human",),
-                     interval: str = "ci", level: float = 0.95) -> pd.DataFrame:
+                     interval: str = "ci", level: float = 0.95,
+                     genre_groups: dict = None) -> pd.DataFrame:
     """
     One row per plotted point.
       - sections whose group is in individual_groups -> one point PER FILE
@@ -418,7 +494,10 @@ def summarise_points(df: pd.DataFrame, individual_groups=("human",),
       - all other sections -> one point per section, aggregated across files
         (err = CI or SD across files, see summarise_by_section)
 
-    Returns columns: group, style, label, mean_metric, err, n_files, kind ("file"/"section")
+      - plus group averages for AI styles with no human file (summarise_group_averages)
+
+    Returns columns: group, style, label, mean_metric, err, n_files, kind ("file"/"section"/"group"),
+    anchor (group rows only: the AI style the average is drawn beside)
     """
     individual_groups = set(individual_groups or ())
     sections = df["section"].dropna().unique()
@@ -444,6 +523,10 @@ def summarise_points(df: pd.DataFrame, individual_groups=("human",),
         ag["kind"]  = "section"
         parts.append(ag[["group", "style", "label", "mean_metric", "err", "n_files", "kind"]])
 
+    ga = summarise_group_averages(df, genre_groups, individual_groups, interval, level)
+    if len(ga):
+        parts.append(ga)
+
     return pd.concat(parts, ignore_index=True)
 
 
@@ -457,7 +540,7 @@ def plot_by_sample(
     xlabel:   str = "Sample size",
     ylabel:   str = "Mean metric",
     output:   str = None,
-    figsize:  tuple = (10, 5),
+    figsize:  tuple = (11, 6),
     log_x:    bool = True,
     show:     bool = True
 ) -> None:
@@ -494,13 +577,13 @@ def plot_by_sample(
             section = data["section"].iloc[0] if has_sections else None
             marker  = section_marker.get(section, "o")
             ax.plot(data["sample_size"], data["mean_metric"],
-                    color=colour, linewidth=1.2, zorder=1)
+                    color=colour, linewidth=2, zorder=1)
             ax.scatter(data["sample_size"], data["mean_metric"],
-                       s=30, color=colour, marker=marker, zorder=2, label=fname)
+                       s=70, color=colour, marker=marker, zorder=2, label=fname)
             if "wse" in data.columns:
                 ax.errorbar(
                     data["sample_size"], data["mean_metric"],
-                    yerr=data["wse"], fmt="none", color=colour, capsize=3, linewidth=1
+                    yerr=data["wse"], fmt="none", color=colour, capsize=4, linewidth=1.6
                 )
 
         # legend: file colours + section shape patches
@@ -509,17 +592,17 @@ def plot_by_sample(
             import matplotlib.lines as mlines
             for section, marker in section_marker.items():
                 handles.append(mlines.Line2D([], [], color="grey", marker=marker,
-                                             linestyle="none", label=f"[{section}]"))
+                                             linestyle="none", markersize=9, label=f"[{section}]"))
         ax.legend(handles=handles, bbox_to_anchor=(1.01, 1), loc="upper left", borderaxespad=0)
     else:
         ax.plot(summary["sample_size"], summary["mean_metric"],
-                color=palette[0], linewidth=1.2, zorder=1)
+                color=palette[0], linewidth=2, zorder=1)
         ax.scatter(summary["sample_size"], summary["mean_metric"],
-                   s=30, color=palette[0], zorder=2)
+                   s=70, color=palette[0], zorder=2)
         if "wse" in summary.columns:
             ax.errorbar(
                 summary["sample_size"], summary["mean_metric"],
-                yerr=summary["wse"], fmt="none", color=palette[0], capsize=3, linewidth=1
+                yerr=summary["wse"], fmt="none", color=palette[0], capsize=4, linewidth=1.6
             )
 
     ax.margins(x=0.08)
@@ -552,8 +635,8 @@ def plot_by_file(
     xlabel:   str = None,
     ylabel:   str = "Mean metric",
     output:   str = None,
-    height:   float = 5,
-    aspect:   float = 0.8,
+    height:   float = 6,
+    aspect:   float = 0.9,
     show:     bool = True,
 ) -> None:
     """
@@ -587,11 +670,11 @@ def plot_by_file(
         for ax, section in zip(axes, sections):
             data = summary[summary["section"] == section].sort_values("filename")
             x_pos = range(len(data))
-            sns.scatterplot(data=data, x="filename", y="mean_metric", s=30, ax=ax)
+            sns.scatterplot(data=data, x="filename", y="mean_metric", s=80, ax=ax)
             if "wse" in data.columns:
                 ax.errorbar(
                     x_pos, data["mean_metric"],
-                    yerr=data["wse"], fmt="none", color="steelblue", capsize=3, linewidth=1
+                    yerr=data["wse"], fmt="none", color="steelblue", capsize=4, linewidth=1.6
                 )
             ax.set_title(section)
             ax.set_xlabel("")
@@ -601,7 +684,7 @@ def plot_by_file(
 
         fig.suptitle(title, y=1.02)
         if xlabel:
-            fig.supxlabel(xlabel, fontsize=11, color="#333333")
+            fig.supxlabel(xlabel, fontsize=18, fontweight="bold", color="#000000")
         plt.tight_layout()
         # fig.subplots_adjust(wspace=0.05)
         if output:
@@ -614,11 +697,11 @@ def plot_by_file(
     else:
         fig, ax = plt.subplots(figsize=(max(6, len(summary) * 0.6), height))
         x_pos = range(len(summary))
-        sns.scatterplot(data=summary, x="filename", y="mean_metric", s=30, ax=ax)
+        sns.scatterplot(data=summary, x="filename", y="mean_metric", s=80, ax=ax)
         if "wse" in summary.columns:
             ax.errorbar(
                 x_pos, summary["mean_metric"],
-                yerr=summary["wse"], fmt="none", color="steelblue", capsize=3, linewidth=1
+                yerr=summary["wse"], fmt="none", color="steelblue", capsize=4, linewidth=1.6
             )
         ax.set_xlabel(xlabel or "")
         ax.set_ylabel(ylabel)
@@ -675,7 +758,6 @@ def summarise_by_section(df: pd.DataFrame, interval: str = "ci", level: float = 
 
 SECTION_SEP = " | "   # separates group and style in a section label
 
-
 def _split_section(section: str):
     """'sonnet5-5 | hemingway' -> ('sonnet5-5', 'hemingway'); 'scifi' -> (None, 'scifi')."""
     if SECTION_SEP in section:
@@ -696,9 +778,10 @@ def plot_by_section(
     sort_by:           str   = "name",
     show_files:        bool  = False,
     label_rotation:    float = 45,
-    height:            float = 5,
+    height:            float = 6.5,
     show:              bool  = True,
     series_colors:     dict  = None,
+    genre_groups:      dict  = None,
 ) -> pd.DataFrame:
     """
     Clusters by style name, one panel per human style directory.
@@ -709,12 +792,19 @@ def plot_by_section(
         plus every model's point for the style directory with the same name
         (matched case-insensitively). Series are colour-coded, and every point gets
         its own angled x-axis label (with file count included for AI series).
-      * AI styles that match no human file are collected in an extra "no human match" panel.
+      * AI styles that match no human file are collected in an extra "generalized" panel.
+        There, each style listed in genre_groups (default GENRE_GROUPS) also gets group averages,
+        drawn as OPEN circles in the series colour, computed from the RAW rows (all runs of all files pooled;
+        error bar = CI or SD across those rows): the human directory's average, and each model's
+        average over its styles that have a human file in that directory
+        ("non-scifi" -> human "fiction", "scifi" -> human "scifi"). genre_groups={} turns it off.
     """
     set_theme()
-    pts = summarise_points(df, individual_groups, interval, level)
+    pts = summarise_points(df, individual_groups, interval, level, genre_groups)
     pts["group"]  = pts["group"].fillna("")
     pts["key"]    = pts["label"].str.strip().str.lower()
+    is_grp        = pts["kind"] == "group"
+    pts.loc[is_grp, "key"] = pts.loc[is_grp, "anchor"].str.strip().str.lower()   # group averages sit beside their AI style
     pts["series"] = pts["group"].replace("", "all")
 
     ind = pts[pts["kind"] == "file"].copy()
@@ -741,12 +831,18 @@ def plot_by_section(
     rest = oth[~oth["key"].isin(used_keys)]
     if len(rest):
         first = rest.sort_values(sort_col if sort_by != "mean" else "label").drop_duplicates("key")
-        panels.append(("no human match" if panels else "", list(zip(first["label"], first["key"])), None))
+        panels.append(("generalized" if panels else "", list(zip(first["label"], first["key"])), None))
         if panels[:-1]:
             print("NOTE: no human file for AI style(s): " + ", ".join(sorted(first["label"])))
 
+    panels = [(PANEL_TITLES.get(t, t), c, h) for t, c, h in panels]
+    panels.sort(key=lambda p: PANEL_ORDER.index(p[0]) if p[0] in PANEL_ORDER else len(PANEL_ORDER))   # stable
+
+    grp = pts[pts["kind"] == "group"]                          # group averages (from summarise_group_averages)
+
     ind_series = list(dict.fromkeys(p[2] for p in panels if p[2]))
     ai_series  = [s for s in sorted(oth["series"].unique()) if s not in ind_series]
+    extra_h    = [s for s in dict.fromkeys(grp["series"]) if s in ind_series]   # human series with group averages
     all_series = ind_series + ai_series
     # palette    = sns.color_palette("muted", n_colors=max(len(all_series), 1))
     # colour_of  = {s: palette[i] for i, s in enumerate(all_series)}
@@ -755,9 +851,9 @@ def plot_by_section(
     free       = [c for c in palette if c not in fixed.values()]      # colours not claimed by a fixed series
     colour_of  = {s: fixed[s] if s in fixed else free.pop(0) for s in all_series}
 
-    max_slots = 1 + len(ai_series)
-    leg_w     = 1.7
-    width     = sum(max(len(p[1]), 1) * (0.38 * max_slots + 0.5) for p in panels) + 0.8 * len(panels) + leg_w
+    max_slots = max(1 + len(ai_series), len(extra_h) + 2 * len(ai_series))
+    leg_w     = 2.3
+    width     = sum(max(len(p[1]), 1) * (0.42 * max_slots + 0.5) for p in panels) + 0.8 * len(panels) + leg_w
     fig, axes = plt.subplots(
         1, len(panels), sharey=True, squeeze=False, figsize=(max(7, width), height),
         gridspec_kw={"width_ratios": [max(len(p[1]), 1) for p in panels]},
@@ -765,30 +861,33 @@ def plot_by_section(
     axes = axes[0]
 
     per_file = summarise_by_file(df) if show_files else None
+    kind_order = {"file": 0, "section": 1, "group": 2}
     for ax, (ptitle, clusters, human_series) in zip(axes, panels):
-        slots = ([human_series] if human_series else []) + ai_series
-        w = min(0.28, 0.85 / max(len(slots), 1))
+        slots = ([human_series] if human_series else extra_h) + ai_series
+        w = min(0.28, 0.85 / max(len(slots) + (len(ai_series) if human_series is None else 0), 1))
         xtick_pos, xtick_labels = [], []
 
         for ci, (label, key) in enumerate(clusters):
-            present = [s for s in slots if ((pts["series"] == s) & (pts["key"] == key)).any()]
-            for si, s in enumerate(present):
-                off  = (si - (len(present) - 1) / 2) * w
-                rows = pts[(pts["series"] == s) & (pts["key"] == key)]
-                for _, r in rows.iterrows():
-                    is_file = r["kind"] == "file"
-                    x_pos   = ci + off
-                    if show_files and not is_file:
-                        sec = f"{r['group']}{SECTION_SEP}{r['style']}" if r["group"] else r["style"]
-                        vals = per_file.loc[per_file["section"] == sec, "mean_metric"]
-                        jit  = (pd.Series(range(len(vals))) / max(len(vals) - 1, 1) - 0.5) * w * 0.7
-                        ax.scatter(x_pos + jit.values, vals, s=12, color=colour_of[s], alpha=0.3, zorder=1)
-                    ax.errorbar(x_pos, r["mean_metric"], yerr=r["err"], fmt="o", color=colour_of[s],
-                                markersize=5 if is_file else 6, capsize=3, linewidth=1.2, zorder=2)
+            cand = pts[(pts["key"] == key) & pts["series"].isin(slots)].copy()
+            cand["_o"] = cand["series"].map(slots.index) * 3 + cand["kind"].map(kind_order)
+            cand = cand.sort_values("_o")
+            for si, (_, r) in enumerate(cand.iterrows()):
+                s       = r["series"]
+                is_file = r["kind"] == "file"
+                is_grp  = r["kind"] == "group"
+                x_pos   = ci + (si - (len(cand) - 1) / 2) * w
+                if show_files and r["kind"] == "section":
+                    sec = f"{r['group']}{SECTION_SEP}{r['style']}" if r["group"] else r["style"]
+                    vals = per_file.loc[per_file["section"] == sec, "mean_metric"]
+                    jit  = (pd.Series(range(len(vals))) / max(len(vals) - 1, 1) - 0.5) * w * 0.7
+                    ax.scatter(x_pos + jit.values, vals, s=26, color=colour_of[s], alpha=0.3, zorder=1)
+                ax.errorbar(x_pos, r["mean_metric"], yerr=r["err"], fmt="o", color=colour_of[s],
+                            markersize=9 if is_file else 10, capsize=4, linewidth=1.8, markeredgewidth=1.8, zorder=2,
+                            markerfacecolor="white" if is_grp else colour_of[s])   # open circle = group average
 
-                    pt_label = r["label"] if is_file else f"{r["label"]} (n={int(r['n_files'])})"
-                    xtick_pos.append(x_pos)
-                    xtick_labels.append(pt_label)
+                pt_label = r["label"] if is_file else f"{r['label']} (n={int(r['n_files'])})"
+                xtick_pos.append(x_pos)
+                xtick_labels.append(pt_label)
 
         ax.set_xticks(xtick_pos)
         ax.set_xticklabels(xtick_labels, rotation=label_rotation,
@@ -796,22 +895,25 @@ def plot_by_section(
         ax.set_xlim(-0.5, max(len(clusters), 1) - 0.5)
         ax.xaxis.grid(False)
         for ci in range(len(clusters) - 1):
-            ax.axvline(ci + 0.5, color="#E3E3E3", linewidth=0.8, zorder=0)
+            ax.axvline(ci + 0.5, color="#CCCCCC", linewidth=1.0, zorder=0)
         ax.set_title(ptitle)
         ax.set_xlabel("")
         ax.set_ylabel(ylabel if ax is axes[0] else "")
 
     import matplotlib.lines as mlines
-    handles = [mlines.Line2D([], [], color=colour_of[s], marker="o", linestyle="none", label=s)
+    handles = [mlines.Line2D([], [], color=colour_of[s], marker="o", linestyle="none", markersize=10, label=s)
                for s in all_series]
+    if len(grp):
+        handles.append(mlines.Line2D([], [], color="#555555", marker="o", markerfacecolor="white",
+                                     linestyle="none", markersize=10, markeredgewidth=1.8, label="group average"))
     fig.legend(handles=handles, loc="center right", frameon=False)
 
     fig.suptitle(title, y=1.02)
     if xlabel:
-        fig.supxlabel(xlabel, fontsize=11, color="#333333")
+        fig.supxlabel(xlabel, fontsize=18, fontweight="bold", color="#000000")
     kind = f"{int(level * 100)}% CI" if interval == "ci" else "SD"
     fig.text(0.99, -0.02, f"human points: own run CI; model points: {kind} across files", ha="right",
-             va="top", fontsize=7, color="#888888")
+             va="top", fontsize=10, color="#555555")
 
     fig.tight_layout(rect=(0, 0, 1 - leg_w / max(7, width), 1))
     if output:
