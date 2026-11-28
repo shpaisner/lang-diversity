@@ -16,6 +16,7 @@ import csv
 import os
 import random
 import time
+import pandas as pd
 
 import numpy as np
 import scipy.stats as stats
@@ -108,7 +109,7 @@ def discover_sections(root, human=True, aigen=True, models=None, group_human=Tru
 
 class MetricRunner:
     # ----- set these in each metric -----
-    name = None                          # short name: results go in <results_root>/<name>/, files are <name>_<time>.txt
+    name = None                          # short name: results go in <results_root>/<name>/, files are <name>_<time>.csv
     title = None                         # e.g. "Lexical diversity"
     unit = "sentences"                   # what n_samples counts, for plot labels
     samples_by_file = [50]               # sample size(s) for the all-sections plot
@@ -201,10 +202,14 @@ class MetricRunner:
 
         # Snapshot of exactly what was plotted, readable by plot.py's replot
         snap = df.rename(columns={"filename": "file", "sample_size": "n_samples", "metric": "score"})
-        snap[["section", "file", "n_samples", "n_run", "score", "ci"]].to_csv(output_file, index=False)
+        snap = snap[["section", "file", "n_samples", "n_run", "score", "ci"]].copy()
+        for c in ("score", "ci"):                       # ci may be empty (None) for some metrics
+            snap[c] = pd.to_numeric(snap[c], errors="coerce").round(4)
+        snap.to_csv(output_file, index=False)
         duplicate_cleaned(output_file)
 
-        png = output_file.replace(".txt", ".png")
+        base = os.path.splitext(output_file)[0]          # results file, plot and summary share this stem
+        png  = base + ".png"
         if by_file:
             summary = plot_by_section(
                 df,
@@ -216,7 +221,7 @@ class MetricRunner:
                 show_files = self.show_files,
                 show       = show_plot,
             )
-            summary_file = output_file.replace(".txt", "_summary.csv")
+            summary_file = base + "_summary.csv"
             summary.to_csv(summary_file, index=False)
             duplicate_cleaned(summary_file)
         else:
@@ -304,5 +309,5 @@ class MetricRunner:
 
         os.makedirs(self.results_dir, exist_ok=True)
         suffix = "_human" if args.human_only and by_file else ""
-        output_file = os.path.join(self.results_dir, f"_{self.name}_{time.strftime('%Y%m%d-%H%M%S')}{suffix}.txt")
+        output_file = os.path.join(self.results_dir, f"_{self.name}_{time.strftime('%Y%m%d-%H%M%S')}{suffix}.csv")
         self.plot(files_by_section, n_samples, output_file, by_file, args.show)

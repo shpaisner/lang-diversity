@@ -1,41 +1,41 @@
-group,style,label,mean_metric,err,n_files,kind,anchor,series
-human,scifi,bradbury,0.8362233333333331,0.002157451997609371,1,file,,human
-human,fiction,doyle,0.8057933333333334,0.0022874127030987996,1,file,,human
-human,fiction,hemingway,0.7689433333333332,0.0036729626219383065,1,file,,human
-human,fiction,james,0.8046566666666668,0.0024189285621851546,1,file,,human
-human,fiction,joyce,0.8207133333333332,0.0023611744014117664,1,file,,human
-human,scifi,kipling,0.8385033333333334,0.002902405828782865,1,file,,human
-human,scifi,lovecraft,0.8393633333333334,0.001904067886069725,1,file,,human
-human,scifi,verne,0.8319200000000001,0.0018843178990580142,1,file,,human
-human,scifi,wells,0.8239033333333333,0.002591276488982754,1,file,,human
-human,fiction,woolf,0.8277933333333334,0.00206194475890717,1,file,,human
-gemini-4-hydrogen,bradbury,bradbury,0.816629,0.0036472516262053964,10,section,,gemini-4-hydrogen
-gemini-4-hydrogen,doyle,doyle,0.8293849999999999,0.0021276126288646223,10,section,,gemini-4-hydrogen
-gemini-4-hydrogen,hemingway,hemingway,0.7747459999999999,0.00279419339465418,10,section,,gemini-4-hydrogen
-gemini-4-hydrogen,james,james,0.817569,0.00810626759999326,10,section,,gemini-4-hydrogen
-gemini-4-hydrogen,joyce,joyce,0.8247920000000001,0.00401100559765476,10,section,,gemini-4-hydrogen
-gemini-4-hydrogen,kipling,kipling,0.8149180000000001,0.0040000283750513494,10,section,,gemini-4-hydrogen
-gemini-4-hydrogen,lovecraft,lovecraft,0.842169,0.002786964669362311,10,section,,gemini-4-hydrogen
-gemini-4-hydrogen,non-scifi,non-scifi,0.8201320000000001,0.0037801599085165232,10,section,,gemini-4-hydrogen
-gemini-4-hydrogen,scifi,scifi,0.8274250000000001,0.004100294284707548,10,section,,gemini-4-hydrogen
-gemini-4-hydrogen,verne,verne,0.8383390000000001,0.002550185665743401,10,section,,gemini-4-hydrogen
-gemini-4-hydrogen,wells,wells,0.826655,0.004595470494418861,10,section,,gemini-4-hydrogen
-gemini-4-hydrogen,woolf,woolf,0.8176219999999998,0.003605218700714704,10,section,,gemini-4-hydrogen
-sonnet5-5,bradbury,bradbury,0.7821679999999999,0.005569045013230274,10,section,,sonnet5-5
-sonnet5-5,doyle,doyle,0.7889709999999999,0.0049796656549657365,10,section,,sonnet5-5
-sonnet5-5,hemingway,hemingway,0.732814,0.00506846194336715,10,section,,sonnet5-5
-sonnet5-5,james,james,0.7844900000000001,0.005191568273382178,10,section,,sonnet5-5
-sonnet5-5,joyce,joyce,0.786068,0.00495026266790403,10,section,,sonnet5-5
-sonnet5-5,kipling,kipling,0.7819689999999999,0.0036552886070859575,10,section,,sonnet5-5
-sonnet5-5,lovecraft,lovecraft,0.800765,0.006003268875355485,10,section,,sonnet5-5
-sonnet5-5,non-scifi,non-scifi,0.788157,0.006259943869564013,10,section,,sonnet5-5
-sonnet5-5,scifi,scifi,0.7912739999999999,0.005170799764334325,10,section,,sonnet5-5
-sonnet5-5,verne,verne,0.8132809999999999,0.0031742622303533147,10,section,,sonnet5-5
-sonnet5-5,wells,wells,0.781928,0.005259203557112179,10,section,,sonnet5-5
-sonnet5-5,woolf,woolf,0.786262,0.004420349769702729,10,section,,sonnet5-5
-human,scifi,avg scifi,0.8339826666666668,0.001349029557972482,5,group,scifi,human
-gemini-4-hydrogen,scifi,avg scifi,0.827742,0.001148889271975045,50,group,scifi,gemini-4-hydrogen
-sonnet5-5,scifi,avg scifi,0.7920222,0.0013353130076351135,50,group,scifi,sonnet5-5
-human,fiction,avg non-scifi,0.80558,0.0034750533987011377,5,group,non-scifi,human
-gemini-4-hydrogen,fiction,avg non-scifi,0.8128228,0.0018581149945237291,50,group,non-scifi,gemini-4-hydrogen
-sonnet5-5,fiction,avg non-scifi,0.775721,0.0020204851801286774,50,group,non-scifi,sonnet5-5
+group,style,label,mean_metric,err,sd,n_files,kind,anchor,series
+human,scifi,bradbury,0.8362,0.0022,,1,file,,human
+human,fiction,doyle,0.8058,0.0023,,1,file,,human
+human,fiction,hemingway,0.7689,0.0037,,1,file,,human
+human,fiction,james,0.8047,0.0024,,1,file,,human
+human,fiction,joyce,0.8207,0.0024,,1,file,,human
+human,scifi,kipling,0.8385,0.0029,,1,file,,human
+human,scifi,lovecraft,0.8394,0.0019,,1,file,,human
+human,scifi,verne,0.8319,0.0019,,1,file,,human
+human,scifi,wells,0.8239,0.0026,,1,file,,human
+human,fiction,woolf,0.8278,0.0021,,1,file,,human
+gemini-4-hydrogen,bradbury,bradbury,0.8166,0.0036,0.0051,10,section,,gemini-4-hydrogen
+gemini-4-hydrogen,doyle,doyle,0.8294,0.0021,0.003,10,section,,gemini-4-hydrogen
+gemini-4-hydrogen,hemingway,hemingway,0.7747,0.0028,0.0039,10,section,,gemini-4-hydrogen
+gemini-4-hydrogen,james,james,0.8176,0.0081,0.0113,10,section,,gemini-4-hydrogen
+gemini-4-hydrogen,joyce,joyce,0.8248,0.004,0.0056,10,section,,gemini-4-hydrogen
+gemini-4-hydrogen,kipling,kipling,0.8149,0.004,0.0056,10,section,,gemini-4-hydrogen
+gemini-4-hydrogen,lovecraft,lovecraft,0.8422,0.0028,0.0039,10,section,,gemini-4-hydrogen
+gemini-4-hydrogen,non-scifi,non-scifi,0.8201,0.0038,0.0053,10,section,,gemini-4-hydrogen
+gemini-4-hydrogen,scifi,scifi,0.8274,0.0041,0.0057,10,section,,gemini-4-hydrogen
+gemini-4-hydrogen,verne,verne,0.8383,0.0026,0.0036,10,section,,gemini-4-hydrogen
+gemini-4-hydrogen,wells,wells,0.8267,0.0046,0.0064,10,section,,gemini-4-hydrogen
+gemini-4-hydrogen,woolf,woolf,0.8176,0.0036,0.005,10,section,,gemini-4-hydrogen
+sonnet5-5,bradbury,bradbury,0.7822,0.0056,0.0078,10,section,,sonnet5-5
+sonnet5-5,doyle,doyle,0.789,0.005,0.007,10,section,,sonnet5-5
+sonnet5-5,hemingway,hemingway,0.7328,0.0051,0.0071,10,section,,sonnet5-5
+sonnet5-5,james,james,0.7845,0.0052,0.0073,10,section,,sonnet5-5
+sonnet5-5,joyce,joyce,0.7861,0.005,0.0069,10,section,,sonnet5-5
+sonnet5-5,kipling,kipling,0.782,0.0037,0.0051,10,section,,sonnet5-5
+sonnet5-5,lovecraft,lovecraft,0.8008,0.006,0.0084,10,section,,sonnet5-5
+sonnet5-5,non-scifi,non-scifi,0.7882,0.0063,0.0088,10,section,,sonnet5-5
+sonnet5-5,scifi,scifi,0.7913,0.0052,0.0072,10,section,,sonnet5-5
+sonnet5-5,verne,verne,0.8133,0.0032,0.0044,10,section,,sonnet5-5
+sonnet5-5,wells,wells,0.7819,0.0053,0.0074,10,section,,sonnet5-5
+sonnet5-5,woolf,woolf,0.7863,0.0044,0.0062,10,section,,sonnet5-5
+human,scifi,avg scifi,0.834,0.0013,0.0084,5,group,scifi,human
+gemini-4-hydrogen,scifi,avg scifi,0.8277,0.0011,0.0131,50,group,scifi,gemini-4-hydrogen
+sonnet5-5,scifi,avg scifi,0.792,0.0013,0.0152,50,group,scifi,sonnet5-5
+human,fiction,avg non-scifi,0.8056,0.0035,0.0215,5,group,non-scifi,human
+gemini-4-hydrogen,fiction,avg non-scifi,0.8128,0.0019,0.0211,50,group,non-scifi,gemini-4-hydrogen
+sonnet5-5,fiction,avg non-scifi,0.7757,0.002,0.023,50,group,non-scifi,sonnet5-5
