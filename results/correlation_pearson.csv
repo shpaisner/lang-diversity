@@ -1,0 +1,7 @@
+metric,model,correlation,p-value
+lex,sonnet,0.785,0.007
+lex,gemini,0.754,0.012
+syn,sonnet,0.577,0.081
+syn,gemini,0.827,0.003
+sem,sonnet,0.546,0.103
+sem,gemini,0.591,0.072
