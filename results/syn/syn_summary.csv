@@ -36,6 +36,6 @@ sonnet5-5,woolf,woolf,0.5394,0.0179,0.025,10,section,,sonnet5-5
 human,scifi,avg scifi,0.6085,0.0099,0.0614,5,group,scifi,human
 gemini-4-hydrogen,scifi,avg scifi,0.4479,0.0064,0.0729,50,group,scifi,gemini-4-hydrogen
 sonnet5-5,scifi,avg scifi,0.5786,0.0032,0.0369,50,group,scifi,sonnet5-5
-human,fiction,avg non-scifi,0.6268,0.0098,0.0605,5,group,non-scifi,human
-gemini-4-hydrogen,fiction,avg non-scifi,0.487,0.0071,0.0803,50,group,non-scifi,gemini-4-hydrogen
-sonnet5-5,fiction,avg non-scifi,0.5932,0.0052,0.0597,50,group,non-scifi,sonnet5-5
+human,fiction,avg fiction,0.6268,0.0098,0.0605,5,group,non-scifi,human
+gemini-4-hydrogen,fiction,avg fiction,0.487,0.0071,0.0803,50,group,non-scifi,gemini-4-hydrogen
+sonnet5-5,fiction,avg fiction,0.5932,0.0052,0.0597,50,group,non-scifi,sonnet5-5

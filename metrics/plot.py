@@ -79,7 +79,7 @@ def set_theme():
             "axes.labelsize":     18,
             "axes.labelweight":   "bold",
             "axes.labelcolor":    "#000000",
-            "xtick.labelsize":    12,
+            "xtick.labelsize":    16,
             "ytick.labelsize":    12,
             "xtick.color":        "#111111",
             "ytick.color":        "#111111",
@@ -87,7 +87,7 @@ def set_theme():
             "ytick.major.size":   6,
             "xtick.major.width":  1.3,
             "ytick.major.width":  1.3,
-            "legend.fontsize":    12,
+            "legend.fontsize":    17,
             "text.color":         "#111111",
             "figure.titlesize":   25,
             "figure.titleweight": "bold",
@@ -418,8 +418,7 @@ SERIES_COLORS = {
 GENRE_GROUPS = {"scifi": "scifi", "non-scifi": "fiction"}
 
 # Panel display names (data keys are untouched) and left-to-right panel order.
-PANEL_TITLES = {"fiction": "non-scifi"}
-PANEL_ORDER  = ["generalized", "non-scifi", "scifi"]
+PANEL_ORDER  = ["generalized", "fiction", "scifi"]
 
 # NOTE quick and dirty approach, STYLES is copied from ../preprocess/openrouter.py
 # Full names for the author clusters in the "scifi" / "non-scifi" panels (keys are the lower-case
@@ -488,7 +487,7 @@ def summarise_group_averages(df: pd.DataFrame, genre_groups: dict = None,
         if hum.empty:
             print(f"NOTE: no human '{genre}' directory, so no group average beside '{ai_key}'")
             continue
-        label    = f"avg {PANEL_TITLES.get(genre, genre)}"
+        label    = f"avg {genre}"
         hum_keys = set(hum["_file"])
         for g, raw in hum.groupby("_g", dropna=False):                       # human average
             rows.append(dict(group=None if pd.isna(g) else g, style=genre, label=label,
@@ -864,7 +863,6 @@ def plot_by_section(
         if panels[:-1]:
             print("NOTE: no human file for AI style(s): " + ", ".join(sorted(first["label"])))
 
-    panels = [(PANEL_TITLES.get(t, t), c, h) for t, c, h in panels]
     panels.sort(key=lambda p: PANEL_ORDER.index(p[0]) if p[0] in PANEL_ORDER else len(PANEL_ORDER))   # stable
 
     grp = pts[pts["kind"] == "group"]                          # group averages (from summarise_group_averages)
@@ -881,7 +879,7 @@ def plot_by_section(
     colour_of  = {s: fixed[s] if s in fixed else free.pop(0) for s in all_series}
 
     max_slots = max(1 + len(ai_series), len(extra_h) + 2 * len(ai_series))
-    leg_w     = 2.3
+    leg_w     = 3.6
     width     = sum(max(len(p[1]), 1) * (0.42 * max_slots + 0.5) for p in panels) + 0.8 * len(panels) + leg_w
     # panel widths follow cluster counts, except "generalized" gets double its share (others shrink to fit)
     ratios = [float(max(len(p[1]), 1)) for p in panels]
@@ -909,6 +907,9 @@ def plot_by_section(
         bar_bottom = ylo if bar_baseline is None else bar_baseline
         axes[0].set_ylim(ylo, hi + pad)
     kind_order = {"file": 0, "section": 1, "group": 2}
+    
+    # "generalized" clusters are labelled by the group their averages come from ("non-scifi" -> "fiction")
+    group_of = {k.lower(): v for k, v in (GENRE_GROUPS if genre_groups is None else genre_groups).items()}
     for ax, (ptitle, clusters, human_series) in zip(axes, panels):
         slots = ([human_series] if human_series else extra_h) + ai_series
         w = min(0.28, 0.85 / max(len(slots) + (len(ai_series) if human_series is None else 0), 1))
@@ -940,11 +941,12 @@ def plot_by_section(
                             markersize=9, capsize=4, linewidth=1.8, markeredgewidth=1.8, zorder=2)
 
             xtick_pos.append(ci)                 # one label per cluster (author / style), centred under it
-            xtick_labels.append(STYLES.get(str(label).strip().lower(), label) if human_series is not None else label)
-
+            xtick_labels.append(STYLES.get(str(label).strip().lower(), label) if human_series is not None
+                                else group_of.get(str(label).strip().lower(), label))
         ax.set_xticks(xtick_pos)
-        ax.set_xticklabels(xtick_labels, rotation=label_rotation,
-                           ha="center" if label_rotation == 0 else "right")
+        
+        rot = 0 if human_series is None else label_rotation          # "generalized" labels are short: keep them flat
+        ax.set_xticklabels(xtick_labels, rotation=rot, ha="center" if rot == 0 else "right")
         ax.set_xlim(-0.5, max(len(clusters), 1) - 0.5)
         ax.xaxis.grid(False)
         for ci in range(len(clusters) - 1):
@@ -954,7 +956,7 @@ def plot_by_section(
         ax.set_ylabel(ylabel if ax is axes[0] else "")
 
     import matplotlib.lines as mlines
-    handles = [mlines.Line2D([], [], color=colour_of[s], marker="o", linestyle="none", markersize=10, label=s)
+    handles = [mlines.Line2D([], [], color=colour_of[s], marker="o", linestyle="none", markersize=12, label=s)
                for s in all_series]
     if has_bars:
         import matplotlib.patches as mpatches
